@@ -1,0 +1,32 @@
+version: "3.8"
+
+# 一键启动 MySQL + Redis（本机已安装可忽略）
+# 使用：docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: retail-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: smart_retail
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - retail-mysql-data:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: retail-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - retail-redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  retail-mysql-data:
+  retail-redis-data:

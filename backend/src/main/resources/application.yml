@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  mvc:
+    # Springfox/Knife4j 3.x 在 Spring Boot 2.6+ 需要 ant 路径匹配
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+  datasource:
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://${retail.mysql.host:localhost}:${retail.mysql.port:3306}/${retail.mysql.database:smart_retail}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${retail.mysql.username:root}
+      password: ${retail.mysql.password:1234}
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      validation-query: SELECT 1
+      test-while-idle: true
+  redis:
+    host: ${retail.redis.host:localhost}
+    port: ${retail.redis.port:6379}
+    database: ${retail.redis.database:10}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+retail:
+  jwt:
+    admin-secret-key: retail-admin-secret-key-2026-mxbc
+    user-secret-key: retail-user-secret-key-2026-mxbc
+    # 过期时间（毫秒），默认约 8 天
+    ttl: 720000000
+  # Dify Agent 配置：留空且 enabled=false 时 AI 客服自动降级为本地 mock 回复
+  dify:
+    enabled: false
+    base-url: ""
+    api-key: ""
+  # Dify 回调 Agent Tools 时携带的共享密钥（请求头 X-Tool-Key）
+  tool:
+    key: retail-tool-secret-2026
+  # AI 接口限流：window 秒内最多 max 次
+  ai:
+    rate-limit:
+      window-seconds: 60
+      max-count: 10
+
+logging:
+  level:
+    com.retail: info

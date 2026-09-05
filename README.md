@@ -1,191 +1,133 @@
-# MXBC 蜜雪冰城点单系统
+# 智能零售客服与订单协同平台
 
-一个面向门店点单场景的全栈示例项目，提供管理端、用户端和后端服务。项目在开源外卖系统基础上进行二次开发，补充了蜜雪冰城风格的菜单与点单流程，并集成了管理端智能小助手。
+面向零售点单业务，构建集 **商品、订单、用户、AI 客服** 于一体的智能业务平台。
+将传统订单系统与 **LLM Agent（Dify）** 能力结合：AI 客服通过 Agent Tools 调用订单、商品、优惠知识库，直接回答用户的业务问题。
 
-> 本项目用于学习、演示和二次开发。仓库中的数据和支付配置仅适合本地调试，不代表完整的生产支付方案。
+## 功能与技术点
 
-![管理端预览](./assets/00.png)
-
-## 功能概览
-
-### 管理端
-
-- 工作台：营业数据、订单概览和趋势图表
-- 菜品、套餐、分类和门店信息管理
-- 订单查询、接单、派送、完成和取消
-- 员工账号与权限管理
-- 数据报表导出
-- WebSocket 新订单提醒
-- 智能小助手：流式对话、会话历史，以及员工和营业数据查询
-
-### 用户端
-
-- 微信小程序和 uni-app 两种入口
-- 菜品、套餐浏览与分类筛选
-- 购物车、地址簿和订单提交
-- 订单状态查询与历史订单
-- 微信登录接口预留
-
-### 后端服务
-
-- JWT 管理端/用户端鉴权
-- MyBatis 数据访问与分页查询
-- Redis 缓存和订单相关状态管理
-- MongoDB 保存智能小助手的消息记忆
-- RustFS（S3 兼容接口）保存图片等对象资源
-- Spring Task 定时任务、WebSocket 实时推送
-- OpenAI 兼容 API + LangChain4j 智能小助手
-
-## 技术栈
-
-| 模块 | 主要技术 |
+| 能力 | 实现 |
 | --- | --- |
-| 后端 | Java 17、Spring Boot 3.2、Spring MVC、MyBatis、Maven |
-| 数据与基础设施 | MySQL 8、Redis 6+、MongoDB 4.4+、RustFS/MinIO SDK |
-| 管理端 | Vue 2.6、TypeScript 3.6、Vue CLI 3、Element UI、ECharts |
-| 用户端 | uni-app、微信小程序、HBuilder X |
-| 智能能力 | LangChain4j、OpenAI 兼容 Chat/Streaming API |
+| 核心业务模块 | Spring Boot 2.7 + MyBatis-Plus，用户/商品/套餐/订单 CRUD、分页、条件查询、逻辑删除、公共字段自动填充 |
+| 数据存储 | MySQL 8：用户、商品、套餐、订单、订单明细、优惠、AI 会话等表，高频字段建索引（订单号唯一索引、用户+状态联合索引等） |
+| 缓存 | Redis 缓存商品热点数据；空值缓存防 **穿透**、SETNX 互斥锁防 **击穿**、随机 TTL 防 **雪崩**；Redis 维护 AI 短期会话上下文 |
+| 实时推送 | WebSocket（`/ws/order/{token}`）订单状态变更实时推送用户端 |
+| AI Agent | Dify Agent 集成：订单查询 / 商品搜索 / 优惠查询封装为 Agent Tools（Dify 回调端点）；未配置 Dify 时自动降级为基于本地知识库的 mock 回复 |
+| 安全 | JWT（用户端/管理端双令牌）、`@RestControllerAdvice` 统一异常、`@Validated` 参数校验、拦截器鉴权、Tools 回调密钥校验 |
+| 限流 | 自定义 `@RateLimit` 注解 + AOP + Redis 固定窗口，用于 AI 对话接口 |
+| 接口文档 | Knife4j：`http://localhost:8080/doc.html` |
 
-## 仓库结构
+## 项目结构
 
 ```text
 .
-├── mxbc/                    # Spring Boot Maven 多模块后端
-│   ├── sky-common/          # 公共配置、工具和基础组件
-│   ├── sky-pojo/            # DTO、VO、Entity
-│   └── sky-server/          # 启动模块、Controller、Service、Mapper
-├── mxbc-frontend/           # Vue2 + TypeScript 管理端
-├── uniapp-hbuilder/         # uni-app 用户端源码
-├── mp-weixin/               # 微信开发者工具可直接导入的工程
-├── assets/                  # README 预览图
-└── sky_take_out.sql         # MySQL 初始化脚本
+├── backend/                  # Spring Boot + MyBatis-Plus 后端（单模块）
+│   ├── pom.xml
+│   └── src/main/java/com/retail/
+│       ├── RetailApplication.java
+│       ├── common/           # Result 封装、全局异常、常量、枚举、ThreadLocal 上下文
+│       ├── config/           # MP/Redis/WebMvc/WebSocket/Knife4j 配置、配置属性类
+│       ├── security/         # JWT 工具、user/admin/tool 三个拦截器、@RateLimit 限流切面
+│       ├── entity/           # 11 个实体（MyBatis-Plus 注解、逻辑删除）
+│       ├── mapper/           # BaseMapper 接口
+│       ├── service/          # 业务层（含缓存保护、订单事务、AI 会话）
+│       ├── ai/               # DifyClient、AgentToolService（订单/商品/优惠工具集）
+│       ├── controller/
+│       │   ├── user/         # C 端接口 /api/user/**
+│       │   ├── admin/        # 管理端接口 /api/admin/**
+│       │   └── ai/           # Dify Tools 回调 /api/ai/tools/**
+│       └── websocket/        # 订单状态推送
+├── user-web/                 # 用户 web 端（Streamlit）：登录/商品下单/订单/AI 客服
+│   ├── app.py
+│   ├── client.py
+│   └── requirements.txt
+├── sql/init.sql              # 建库建表 + 索引 + 演示数据
+└── docker-compose.yml        # 可选：一键 MySQL + Redis
 ```
-
-## 环境要求
-
-- JDK 17
-- Maven 3.8+
-- MySQL 8.0+
-- Redis 6+
-- MongoDB 4.4+（智能小助手会话记忆）
-- Node.js 16.x 和 Yarn 1.x（管理端为 Vue2/旧版 Vue CLI 项目）
-- 微信开发者工具（运行 `mp-weixin` 时需要）
-- HBuilder X（运行 `uniapp-hbuilder` 时需要）
 
 ## 快速开始
 
-### 1. 初始化 MySQL
+### 1. 准备依赖服务
 
-创建数据库后导入根目录脚本：
+- JDK 17、Maven 3.8+
+- MySQL 8、Redis 6+（本机已有可直接用；或 `docker compose up -d` 一键启动）
+- Python 3.10+（用户 web 端）
+
+### 2. 初始化数据库
 
 ```sql
-source sky_take_out.sql;
+source sql/init.sql;   -- 库名 smart_retail，含演示数据
 ```
 
-脚本默认使用数据库名 `sky_take_out`。如需使用其他名称，请同步修改后端配置。
+默认账号：
+- 管理员 `admin / 123456`
+- 演示用户 `demo / 123456`
 
-### 2. 配置并启动后端
+### 3. 启动后端（端口 8080）
 
-后端默认端口为 `8080`，开发环境会加载 `mxbc/sky-server/src/main/resources/env-config.yml`。建议通过操作系统环境变量覆盖其中的默认值，不要把真实凭据提交到 Git。
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-至少需要准备以下服务：
+数据库/Redis 默认连接 `localhost:3306`（root/1234）和 `localhost:6379`（db 10），
+可通过环境变量覆盖：`retail.mysql.host/password`、`retail.redis.host/port/database` 等（见 `application.yml`）。
 
-| 环境变量 | 用途 |
+接口文档：http://localhost:8080/doc.html
+
+### 4. 启动用户 web 端（Streamlit，默认 8501）
+
+```bash
+cd user-web
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+浏览器打开 http://localhost:8501 ，用 `demo / 123456` 登录，可浏览商品、下单、查订单、和 AI 客服对话。
+
+## AI 客服与 Dify 接入
+
+**默认降级模式**：未配置 Dify 也能完整体验——AI 客服通过本地知识库真实查询订单/商品/优惠数据生成回复。
+
+**接入 Dify**（`application.yml` 中 `retail.dify`）：
+
+```yaml
+retail:
+  dify:
+    enabled: true
+    base-url: https://your-dify-host   # Dify 服务地址
+    api-key: app-xxxxxxxxxxxx          # Dify App API-Key
+  tool:
+    key: your-tool-secret              # Dify 回调 Tools 的共享密钥
+```
+
+Agent Tools 端点（在 Dify 中注册为自定义工具，请求头带 `X-Tool-Key`）：
+
+| 端点 | 能力 |
 | --- | --- |
-| `SKY_MYSQL_HOST`、`SKY_MYSQL_PORT` | MySQL 地址和端口 |
-| `SKY_MYSQL_DATABASE`、`SKY_MYSQL_USERNAME`、`SKY_MYSQL_PASSWORD` | 数据库连接 |
-| `SKY_REDIS_HOST`、`SKY_REDIS_PORT`、`SKY_REDIS_PASSWORD` | Redis 连接 |
-| `SKY_MONGODB_URI` | 智能小助手会话记忆 |
-| `SKY_RUSTFS_ENDPOINT`、`SKY_RUSTFS_ACCESS_KEY_ID`、`SKY_RUSTFS_ACCESS_KEY_SECRET` | 对象存储连接 |
-| `SKY_RUSTFS_BUCKET_NAME`、`SKY_RUSTFS_PUBLIC_BASE_URL` | Bucket 和图片访问地址 |
-| `SKY_AI_BASE_URL`、`SKY_AI_API_KEY`、`SKY_AI_MODEL_NAME` | OpenAI 兼容模型服务 |
-| `SKY_WECHAT_*` | 微信登录/支付等能力（按需配置） |
+| `POST /api/ai/tools/order-query` | 按用户/订单号/状态查订单 |
+| `POST /api/ai/tools/product-search` | 商品名模糊搜索 |
+| `POST /api/ai/tools/discount-query` | 查询进行中的优惠活动 |
 
-RustFS 需要提前创建对应 Bucket，并允许应用读取对象。`SKY_RUSTFS_PUBLIC_BASE_URL` 应填写浏览器可以访问的域名或反向代理地址。
+## 主要接口
 
-在 IDE 中运行 `com.sky.SkyApplication`，或使用命令行：
+用户端（登录后请求头带 `token`）：
+- `POST /api/user/auth/register|login`，`GET /api/user/auth/me`
+- `GET /api/user/categories|products|setmeals`，`GET /api/user/products/{id}`
+- `POST /api/user/orders`，`GET /api/user/orders`，`GET /api/user/orders/{id}`，`PUT /api/user/orders/{id}/cancel`
+- `POST /api/user/ai/chat`（限流 60s/10 次），`GET /api/user/ai/sessions`
 
-```bash
-cd mxbc
-mvn -f sky-server/pom.xml spring-boot:run
-```
+管理端：
+- `POST /api/admin/auth/login`
+- `GET/POST/PUT/DELETE /api/admin/products/**`
+- `GET /api/admin/orders/page`，`PUT /api/admin/orders/{id}/status/{status}`（触发 WebSocket 推送）
 
-后端启动后，可按项目实际配置访问接口文档（通常为 `/doc.html` 或 `/swagger-ui/index.html`）。
+## 待完善（TODO）
 
-### 3. 启动管理端
-
-管理端默认通过 `/api` 代理后端，并使用 `ws://localhost:8080/ws/` 接收订单通知。先确认 `mxbc-frontend/.env.development` 中的地址与后端一致，再执行：
-
-```bash
-cd mxbc-frontend
-yarn install
-yarn serve
-```
-
-生产构建：
-
-```bash
-yarn build
-```
-
-开发服务器启动后，按终端显示的地址打开管理端登录页。
-
-### 4. 运行微信小程序
-
-1. 安装微信开发者工具并登录自己的账号。
-2. 用开发者工具导入 `mp-weixin` 目录。
-3. 将项目 AppID 替换为自己的 AppID，并按需修改后端接口地址。
-4. 本地调试时确认后端已启动；真机或体验版需要在微信公众平台配置合法域名。
-
-### 5. 运行 uni-app
-
-1. 使用 HBuilder X 打开 `uniapp-hbuilder`。
-2. 在 `manifest.json` 配置小程序 AppID。
-3. 配置微信开发者工具路径。
-4. 选择“运行到微信开发者工具”进行调试。
-
-## 智能小助手
-
-管理端菜单中的“小助手”对应后端 `/admin/chat` 接口，主要配置项为：
-
-- `SKY_AI_BASE_URL`：OpenAI 兼容服务地址
-- `SKY_AI_API_KEY`：服务密钥
-- `SKY_AI_MODEL_NAME`：模型名称
-- `SKY_MONGODB_URI`：会话消息记忆数据库
-
-会话列表保存在 MySQL，消息记忆保存在 MongoDB。小助手内置员工信息和营业数据查询工具；如果没有配置模型服务，管理端其他点单和运营功能不受影响。旧版 `/admin/ai-service` 科大讯飞接口仍保留为兼容入口，需要单独设置 `SKY_LEGACY_XFYUN_*` 配置。
-
-## 常见问题
-
-### 前端安装或构建时报 TypeScript 类型错误
-
-该项目使用较旧的 Vue CLI、TypeScript 和依赖版本，建议使用 Node.js 16.x 与 Yarn 1.x，并清理依赖后重装：
-
-```powershell
-cd mxbc-frontend
-Remove-Item -Recurse -Force node_modules
-yarn install
-```
-
-### 后端无法连接数据库
-
-检查 MySQL 服务是否启动，以及 `SKY_MYSQL_*`、`SKY_REDIS_*`、`SKY_MONGODB_URI` 是否指向可访问的实例。首次运行时确认已经导入 `sky_take_out.sql`。
-
-### 图片上传后无法显示
-
-检查 RustFS Endpoint、Bucket、访问密钥和 `SKY_RUSTFS_PUBLIC_BASE_URL`。公网地址应能从浏览器直接访问对象；如果使用反向代理，请将该变量设置为代理后的地址。
-
-### 智能小助手没有回复
-
-确认 `SKY_AI_BASE_URL`、`SKY_AI_API_KEY`、`SKY_AI_MODEL_NAME` 已设置，模型服务网络可达，并检查后端日志。流式回复还需要前端和代理支持长连接。
-
-## 安全说明
-
-- 请立即替换开发配置中的数据库、对象存储、微信和模型服务凭据。
-- 不要提交真实密钥、手机号、身份证号、支付证书或生产环境地址。
-- 生产环境应更换 JWT 密钥、默认账号密码，并限制数据库、Redis、MongoDB 和对象存储的网络访问。
-- 微信支付、退款和回调流程需要使用正式商户配置并完成完整的验签、幂等和风控校验；本仓库仅提供演示接入。
+- 订单状态机校验、库存扣减（乐观锁防超卖）、支付回调
+- Dify SSE 流式回复（当前 blocking）、Tools 调用记录落库（`tool_name`）
+- 管理端 Web 界面（当前通过 Knife4j 管理）
+- 接口压测与性能报告
 
 ## License
 
-本项目采用 [MIT License](./LICENSE)。
+MIT
