@@ -175,7 +175,7 @@ public class AiChatServiceImpl implements AiChatService {
                     + "1. 查询订单状态（如「我的订单到哪了」）\n"
                     + "2. 搜索商品（如「有什么奶茶」）\n"
                     + "3. 查询优惠活动（如「最近有什么优惠」）\n"
-                    + "（当前为本地模拟回复，配置 Dify 后将接入大模型 Agent）";
+                    + "（当前为本地模拟回复，在 application.yml 填入 retail.llm.api-key 后将接入大模型 Agent）";
         } catch (Exception e) {
             log.error("mock 回复生成失败", e);
             return MessageConstant.AI_SERVICE_ERROR;

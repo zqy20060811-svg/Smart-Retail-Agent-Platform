@@ -45,6 +45,15 @@ retail:
     user-secret-key: retail-user-secret-key-2026-mxbc
     # 过期时间（毫秒），默认约 8 天
     ttl: 720000000
+  # 直连大模型 Agent（OpenAI 兼容 Function Calling）：填入 api-key 即自动启用，留空降级本地 mock
+  # DeepSeek: base-url=https://api.deepseek.com  model=deepseek-chat（也可用环境变量 DEEPSEEK_API_KEY 注入）
+  # 通义Qwen: base-url=https://dashscope.aliyuncs.com/compatible-mode/v1  model=qwen-plus
+  # 智谱GLM:  base-url=https://open.bigmodel.cn/api/paas/v4  model=glm-4-flash（免费）
+  llm:
+    enabled: true
+    base-url: "https://api.deepseek.com"
+    api-key: "${DEEPSEEK_API_KEY:}"
+    model: "deepseek-chat"
   # Dify Agent 配置：留空且 enabled=false 时 AI 客服自动降级为本地 mock 回复
   dify:
     enabled: false

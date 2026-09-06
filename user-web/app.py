@@ -180,7 +180,7 @@ with tab_orders:
 # ================= AI 客服 =================
 with tab_ai:
     st.caption("可以问：「我的奶茶做好了吗」「有什么奶茶」「最近有什么优惠」"
-               "（未配置 Dify 时为本地知识库模拟回复，订单/商品/优惠数据真实可查）")
+               "（配置 retail.llm.api-key 后为大模型 Agent 真实回复，未配置时为本地知识库模拟回复，订单/商品/优惠数据真实可查）")
 
     for msg in st.session_state.ai_messages:
         with st.chat_message(msg["role"]):
