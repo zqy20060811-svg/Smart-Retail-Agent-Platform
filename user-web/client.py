@@ -55,10 +55,8 @@ class RetailClient:
                           "categoryId": category_id, "keyword": keyword})
 
     # ---------- 订单 ----------
-    def create_order(self, items, phone=None, address=None, remark=None):
-        return self._post("/api/user/orders",
-                          {"items": items, "phone": phone,
-                           "address": address, "remark": remark})
+    def create_order(self, items, remark=None):
+        return self._post("/api/user/orders", {"items": items, "remark": remark})
 
     def my_orders(self, page=1, page_size=10, status=None):
         return self._get("/api/user/orders",

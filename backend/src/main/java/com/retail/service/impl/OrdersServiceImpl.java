@@ -49,10 +49,8 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         Orders order = new Orders();
         order.setOrderNo(generateOrderNo());
         order.setUserId(userId);
-        order.setPhone(createDTO.getPhone());
-        order.setAddress(createDTO.getAddress());
         order.setRemark(createDTO.getRemark());
-        // 骨架：直接进入待接单
+        // 骨架：下单后直接进入待接单
         order.setStatus(OrderStatusEnum.PENDING_ACCEPT.getCode());
         order.setPayStatus(1);
 

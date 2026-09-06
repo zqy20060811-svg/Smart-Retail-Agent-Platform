@@ -32,9 +32,6 @@ public class Orders extends BaseEntity {
     /** 支付状态：0 未支付 1 已支付 2 已退款 */
     private Integer payStatus;
 
-    private String phone;
-
-    private String address;
-
+    /** 订单备注（如：少冰、不加糖） */
     private String remark;
 }

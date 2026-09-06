@@ -235,7 +235,7 @@ with tab_products:
 
 # ================= 订单管理 =================
 with tab_orders:
-    status_filter = st.selectbox("订单状态", ["全部", "待接单", "已接单", "派送中", "已完成", "已取消"])
+    status_filter = st.selectbox("订单状态", ["全部", "待接单", "制作中", "已完成", "已取消"])
     status_code = next((k for k, v in ORDER_STATUS.items() if v == status_filter), None)
     try:
         data = client.orders_page(page=1, page_size=30, status=status_code) or {}
@@ -252,11 +252,11 @@ with tab_orders:
                 detail = client.order_detail(o["id"]) or {}
                 for it in detail.get("items", []):
                     st.write(f"- {it['productName']} x{it['number']}　¥{it['amount']}")
-                if o.get("phone") or o.get("address"):
-                    st.caption(f"联系：{o.get('phone') or '-'}　地址：{o.get('address') or '-'}")
+                if o.get("remark"):
+                    st.caption(f"备注：{o['remark']}")
             except ApiError:
                 pass
-            next_status = {2: (3, "✅ 接单"), 3: (4, "🛵 开始派送"), 4: (5, "📦 完成订单")}
+            next_status = {2: (3, "✅ 接单·开始制作"), 3: (5, "✅ 制作完成·可取餐")}
             if o["status"] in next_status:
                 code, label = next_status[o["status"]]
                 if st.button(label, key=f"os_{o['id']}"):

@@ -142,7 +142,7 @@ public class AiChatServiceImpl implements AiChatService {
     private String mockReply(Long userId, String query) {
         String q = query.toLowerCase();
         try {
-            if (q.contains("订单") || q.contains("order") || q.contains("快递") || q.contains("到哪")) {
+            if (q.contains("订单") || q.contains("order") || q.contains("做好") || q.contains("出餐") || q.contains("到哪")) {
                 List<Orders> orders = agentToolService.queryOrder(userId, null, null);
                 if (orders.isEmpty()) {
                     return "您目前还没有订单哦，可以先去商品页挑选喜欢的商品下单~";

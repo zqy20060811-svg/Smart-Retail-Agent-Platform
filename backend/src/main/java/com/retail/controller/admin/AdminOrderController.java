@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 管理端：订单管理（接单/派送/完成，状态变更经 WebSocket 推送用户）
+ * 管理端：订单管理（接单/制作完成，状态变更经 WebSocket 推送用户，线下点单无配送环节）
  */
 @RestController
 @RequestMapping("/api/admin/orders")
@@ -35,7 +35,7 @@ public class AdminOrderController {
     }
 
     @PutMapping("/{id}/status/{status}")
-    @ApiOperation("更新订单状态（3已接单 4派送中 5已完成），实时推送用户")
+    @ApiOperation("更新订单状态（3制作中 5已完成），实时推送用户")
     public Result<Void> status(@PathVariable Long id, @PathVariable Integer status) {
         ordersService.updateStatus(id, status);
         return Result.success();

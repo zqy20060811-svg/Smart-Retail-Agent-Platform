@@ -14,8 +14,7 @@ import java.util.List;
 @Data
 public class OrderCreateDTO implements Serializable {
 
-    private String phone;
-    private String address;
+    /** 订单备注（如：少冰、不加糖） */
     private String remark;
 
     @NotEmpty(message = "订单商品不能为空")

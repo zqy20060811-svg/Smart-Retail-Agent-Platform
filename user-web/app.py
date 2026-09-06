@@ -77,7 +77,7 @@ if not st.session_state.user:
     st.stop()
 
 client = get_client()
-STATUS = {1: "待付款", 2: "待接单", 3: "已接单", 4: "派送中", 5: "已完成", 6: "已取消"}
+STATUS = {1: "待付款", 2: "待接单", 3: "制作中", 5: "已完成", 6: "已取消"}
 
 # ---------------- 主界面 ----------------
 tab_shop, tab_orders, tab_ai = st.tabs(["🛍️ 商品下单", "📋 我的订单", "🤖 AI 客服"])
@@ -179,7 +179,7 @@ with tab_orders:
 
 # ================= AI 客服 =================
 with tab_ai:
-    st.caption("可以问：「我的订单到哪了」「有什么奶茶」「最近有什么优惠」"
+    st.caption("可以问：「我的奶茶做好了吗」「有什么奶茶」「最近有什么优惠」"
                "（未配置 Dify 时为本地知识库模拟回复，订单/商品/优惠数据真实可查）")
 
     for msg in st.session_state.ai_messages:
