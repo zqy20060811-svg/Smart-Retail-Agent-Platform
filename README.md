@@ -36,7 +36,11 @@
 │       │   ├── admin/        # 管理端接口 /api/admin/**
 │       │   └── ai/           # Dify Tools 回调 /api/ai/tools/**
 │       └── websocket/        # 订单状态推送
-├── user-web/                 # 用户 web 端（Streamlit）：登录/商品下单/订单/AI 客服
+├── user-web/                 # 用户 web 端（Streamlit，端口 8502）：登录/商品下单/订单/AI 客服
+│   ├── app.py
+│   ├── client.py
+│   └── requirements.txt
+├── admin-web/                # 商家管理端（Streamlit，端口 8503）：工作台/商品/分类/订单/优惠管理
 │   ├── app.py
 │   ├── client.py
 │   └── requirements.txt
@@ -74,15 +78,25 @@ mvn spring-boot:run
 
 接口文档：http://localhost:8080/doc.html
 
-### 4. 启动用户 web 端（Streamlit，默认 8501）
+### 4. 启动用户 web 端（Streamlit，端口 8502）
 
 ```bash
 cd user-web
 pip install -r requirements.txt
-streamlit run app.py
+streamlit run app.py --server.port 8502
 ```
 
-浏览器打开 http://localhost:8501 ，用 `demo / 123456` 登录，可浏览商品、下单、查订单、和 AI 客服对话。
+浏览器打开 http://localhost:8502 ，用 `demo / 123456` 登录，可浏览商品、下单、查订单、和 AI 客服对话。
+
+### 5. 启动商家管理端（Streamlit，端口 8503）
+
+```bash
+cd admin-web
+pip install -r requirements.txt
+streamlit run app.py --server.port 8503
+```
+
+浏览器打开 http://localhost:8503 ，用 `admin / 123456` 登录，可查看工作台经营数据、管理商品/分类/优惠活动、接单并流转订单状态（状态变更经 WebSocket 实时推送给用户端）。
 
 ## AI 客服与 Dify 接入
 
@@ -116,16 +130,18 @@ Agent Tools 端点（在 Dify 中注册为自定义工具，请求头带 `X-Tool
 - `POST /api/user/orders`，`GET /api/user/orders`，`GET /api/user/orders/{id}`，`PUT /api/user/orders/{id}/cancel`
 - `POST /api/user/ai/chat`（限流 60s/10 次），`GET /api/user/ai/sessions`
 
-管理端：
+管理端（商家端 Web 使用，admin / 123456）：
 - `POST /api/admin/auth/login`
+- `GET /api/admin/workspace/stats`（工作台经营数据）
 - `GET/POST/PUT/DELETE /api/admin/products/**`
-- `GET /api/admin/orders/page`，`PUT /api/admin/orders/{id}/status/{status}`（触发 WebSocket 推送）
+- `GET/POST/PUT/DELETE /api/admin/category/**`
+- `GET/POST/PUT/DELETE /api/admin/promotion/**`
+- `GET /api/admin/orders/page`，`GET /api/admin/orders/{id}`，`PUT /api/admin/orders/{id}/status/{status}`（触发 WebSocket 推送）
 
 ## 待完善（TODO）
 
 - 订单状态机校验、库存扣减（乐观锁防超卖）、支付回调
 - Dify SSE 流式回复（当前 blocking）、Tools 调用记录落库（`tool_name`）
-- 管理端 Web 界面（当前通过 Knife4j 管理）
 - 接口压测与性能报告
 
 ## License
