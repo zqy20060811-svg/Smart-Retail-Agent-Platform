@@ -36,7 +36,7 @@
 │       │   ├── admin/        # 管理端接口 /api/admin/**
 │       │   └── ai/           # Dify Tools 回调 /api/ai/tools/**
 │       └── websocket/        # 订单状态推送
-├── user-web/                 # 用户 web 端（Streamlit，端口 8502）：登录/商品下单/订单/AI 客服
+├── user-web/                 # 用户 web 端（Streamlit，端口 8504）：登录/商品下单/订单/AI 客服
 │   ├── app.py
 │   ├── client.py
 │   └── requirements.txt
@@ -78,15 +78,15 @@ mvn spring-boot:run
 
 接口文档：http://localhost:8080/doc.html
 
-### 4. 启动用户 web 端（Streamlit，端口 8502）
+### 4. 启动用户 web 端（Streamlit，端口 8504）
 
 ```bash
 cd user-web
 pip install -r requirements.txt
-streamlit run app.py --server.port 8502
+streamlit run app.py --server.port 8504
 ```
 
-浏览器打开 http://localhost:8502 ，用 `demo / 123456` 登录，可浏览商品、下单、查订单、和 AI 客服对话。
+浏览器打开 http://localhost:8504 ，用 `demo / 123456` 登录，可浏览商品、下单、查订单、和 AI 客服对话。
 
 ### 5. 启动商家管理端（Streamlit，端口 8503）
 
