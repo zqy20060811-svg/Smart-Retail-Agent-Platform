@@ -1,0 +1,139 @@
+openapi: 3.0.0
+info:
+  title: 智能零售客服 Agent 工具集
+  title_en: Retail Customer-Service Agent Tools
+  description: |
+    线下奶茶/零售门店智能客服可调用的业务工具：
+    查询顾客订单进度、按关键词搜索在售商品、查询门店正在进行的优惠活动。
+    所有接口统一返回 {code, message, data} 结构，code=1 表示成功，data 中是真实业务数据。
+  version: 1.0.0
+
+# ==========================================================================
+# 注意：Dify 云端版访问不到 localhost，请把下面替换为你的公网穿透地址
+# （如 cpolar/natapp/frp 给 8080 端口生成的 https 地址）；若 Dify 是本机/内网
+# Docker 部署，可填宿内网地址（如 http://192.168.x.x:8080）。
+# 路径前不要带 /v1 —— 这是我们自己的后端，不是 Dify API。
+# ==========================================================================
+servers:
+  - url: https://replace-with-your-public-address.example.com
+
+# 鉴权方式：API Key —— 自定义请求头 X-Tool-Key
+# 对应后端 application.yml 的 retail.tool.key（默认 retail-tool-secret-2026）
+security:
+  - ToolKeyAuth: []
+
+components:
+  securitySchemes:
+    ToolKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Tool-Key
+
+  schemas:
+    Result:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 1=成功，其他=失败
+          example: 1
+        message:
+          type: string
+          example: success
+        data:
+          type: string
+          description: 业务数据（订单/商品/活动列表），失败时可能为 null
+
+paths:
+  /api/ai/tools/order-query:
+    post:
+      summary: 查询顾客订单
+      description: |
+        查询当前登录顾客的订单列表，可按状态筛选。用于回答“我的奶茶做好了吗/我的订单进度/订单到哪一步了”。
+        订单状态码：2=待接单，3=制作中，5=已完成（可取餐），6=已取消；1=待付款。
+        注意：这是线下点单系统，没有配送环节，不要出现派送/快递等说法。
+      operationId: queryOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  format: int64
+                  description: 提问顾客的用户ID，由业务系统通过对话变量 sys.user_id 提供（演示环境可填 1）
+                  example: 1
+                status:
+                  type: integer
+                  description: 订单状态码筛选，可选项：2待接单 / 3制作中 / 5已完成 / 6已取消；不传查所有
+                  example: 3
+                orderNo:
+                  type: string
+                  description: 订单号（顾客提供时精确查找，一般不用填）
+              required:
+                - userId
+      responses:
+        '200':
+          description: 订单列表（最新的在前，最多10条）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /api/ai/tools/product-search:
+    post:
+      summary: 搜索门店商品
+      description: |
+        按关键词搜索门店正在售卖的商品（奶茶、小食等），用于回答“有什么奶茶/有没有xx饮品/推荐一杯”。
+        只返回上架在售的商品，数据含商品名、价格、月销量。
+      operationId: searchProducts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyword:
+                  type: string
+                  description: 商品关键词，如 奶茶、果茶、咖啡；用户只是随便看看时传空字符串
+                  example: 奶茶
+              required:
+                - keyword
+      responses:
+        '200':
+          description: 商品列表（按销量排序，最多10条）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /api/ai/tools/discount-query:
+    post:
+      summary: 查询优惠活动
+      description: |
+        查询门店当前正在进行的优惠活动（满减、折扣、赠品），用于回答“有什么优惠/活动/打折吗”。
+        只返回进行中的活动；可按关键词过滤。
+      operationId: queryDiscounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyword:
+                  type: string
+                  description: 活动关键词，如 满减、第二杯；查全部活动时传空字符串
+                  example: ""
+              required:
+                - keyword
+      responses:
+        '200':
+          description: 活动列表（最多10条）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'

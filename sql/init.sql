@@ -215,3 +215,13 @@ INSERT INTO `setmeal` (`name`, `category_id`, `price`, `description`, `status`) 
 INSERT INTO `promotion` (`title`, `type`, `content`, `start_time`, `end_time`, `status`) VALUES
 ('满20减3', 1, '订单满20元立减3元', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), 1),
 ('第二杯半价', 2, '茶饮类第二杯半价', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), 1);
+
+-- 演示订单（归属 demo 用户 id=1）：一单制作中、一单已完成，便于 AI 客服 Agent 演示订单查询
+INSERT INTO `orders` (`id`, `order_no`, `user_id`, `amount`, `status`, `pay_status`, `remark`, `create_time`) VALUES
+(1, CONCAT('DEMO', DATE_FORMAT(NOW(), '%Y%m%d'), '001'), 1, 8.00, 3, 1, '少冰、三分糖', DATE_SUB(NOW(), INTERVAL 10 MINUTE)),
+(2, CONCAT('DEMO', DATE_FORMAT(NOW(), '%Y%m%d'), '002'), 1, 13.00, 5, 1, NULL, DATE_SUB(NOW(), INTERVAL 2 HOUR));
+
+INSERT INTO `order_item` (`order_id`, `product_id`, `product_name`, `amount`, `number`) VALUES
+(1, 2, '珍珠奶茶', 8.00, 1),
+(2, 7, '拿铁咖啡', 8.00, 1),
+(2, 9, '脆薯条', 5.00, 1);
